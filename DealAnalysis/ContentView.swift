@@ -42,18 +42,21 @@ struct ContentView: View {
                 Button("Calculate") {
                     calculateMetrics()
                     hideKeyboard()
-                }
+                } .frame(width: 80)
                 .padding()
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 
+                
                 Button("Reset") {
                     resetFields ()
-                }.padding()
+                }.frame(width: 80)
+                    .padding()
                     .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(8)
+                    
                 
             }
                         
