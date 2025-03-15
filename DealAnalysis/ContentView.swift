@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var propertyPrice: String = ""
     @State private var grossIncome: String = ""
     @State private var operatingExpenses: String = ""
@@ -36,13 +37,26 @@ struct ContentView: View {
             .keyboardType(.decimalPad)
             .padding()
             
-            Button("Calculate") {
-                calculateMetrics()
+            HStack {
+                
+                Button("Calculate") {
+                    calculateMetrics()
+                    hideKeyboard()
+                }
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+                Button("Reset") {
+                    resetFields ()
+                }.padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                
             }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
+                        
             
             if let noi = noi, let capRate = capRate, let cashFlow = cashFlow, let cashOnCashReturn = cashOnCashReturn {
                 VStack(alignment: .leading) {
@@ -73,6 +87,26 @@ struct ContentView: View {
         cashFlow = noi! - debt
         cashOnCashReturn = (cashFlow! / invested) * 100
     }
+    
+    func resetFields () {
+        propertyPrice = ""
+        grossIncome = ""
+        operatingExpenses = ""
+        debtService = ""
+        cashInvested = ""
+        noi = nil
+        capRate = nil
+        cashFlow = nil
+        cashOnCashReturn = nil
+    }
+    
+    func hideKeyboard() {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
 }
 
+#Preview {
+    ContentView()
+        .modelContainer(for: Item.self, inMemory: true)
+}
 
