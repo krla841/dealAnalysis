@@ -6,56 +6,73 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @State private var propertyPrice: String = ""
+    @State private var grossIncome: String = ""
+    @State private var operatingExpenses: String = ""
+    @State private var debtService: String = ""
+    @State private var cashInvested: String = ""
+    
+    @State private var noi: Double? = nil
+    @State private var capRate: Double? = nil
+    @State private var cashFlow: Double? = nil
+    @State private var cashOnCashReturn: Double? = nil
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        VStack {
+            Text("Real Estate Metrics Calculator")
+                .font(.title)
+                .padding()
+            
+            Group {
+                TextField("Property Price ($)", text: $propertyPrice)
+                TextField("Gross Income ($/year)", text: $grossIncome)
+                TextField("Operating Expenses ($/year)", text: $operatingExpenses)
+                TextField("mortgage (principal + interest) ($/year)", text: $debtService)
+                TextField("Cash Invested ($)", text: $cashInvested)
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .keyboardType(.decimalPad)
+            .padding()
+            
+            Button("Calculate") {
+                calculateMetrics()
             }
-        } detail: {
-            Text("Select an item")
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            
+            if let noi = noi, let capRate = capRate, let cashFlow = cashFlow, let cashOnCashReturn = cashOnCashReturn {
+                VStack(alignment: .leading) {
+                    Text("NOI: $\(noi, specifier: "%.2f")")
+                    Text("Cap Rate: \(capRate, specifier: "%.2f")%")
+                    Text("Cash Flow: $\(cashFlow, specifier: "%.2f")")
+                    Text("Cash on Cash Return: \(cashOnCashReturn, specifier: "%.2f")%")
+                }
+                .padding()
+            }
+            
+            Spacer()
         }
+        .padding()
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    
+    func calculateMetrics() {
+        guard let price = Double(propertyPrice),
+              let income = Double(grossIncome),
+              let expenses = Double(operatingExpenses),
+              let debt = Double(debtService),
+              let invested = Double(cashInvested) else {
+            return
         }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        
+        noi = income - expenses
+        capRate = (noi! / price) * 100
+        cashFlow = noi! - debt
+        cashOnCashReturn = (cashFlow! / invested) * 100
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
-}
+
