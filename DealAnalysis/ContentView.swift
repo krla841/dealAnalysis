@@ -60,7 +60,7 @@ struct ContentView: View {
                         
         
                 List(searchDelegate.searchResults, id: \ .self) { suggestion in
-                    Text(suggestion.title)
+                    Text("\(suggestion.title), \(suggestion.subtitle)" )
                         .onTapGesture {
                             propertyAddress = suggestion.title
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
