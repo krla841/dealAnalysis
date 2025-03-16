@@ -6,9 +6,33 @@
 //
 
 import SwiftUI
+import MapKit
+
+class SearchCompleterDelegate: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
+    @Published var searchResults: [MKLocalSearchCompletion] = []
+    private var searchCompleter = MKLocalSearchCompleter()
+    
+    override init() {
+        super.init()
+        searchCompleter.delegate = self
+        searchCompleter.resultTypes = .address
+    }
+    
+    func updateQuery(_ query: String) {
+        searchCompleter.queryFragment = query
+    }
+    
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        DispatchQueue.main.async {
+            self.searchResults = completer.results
+        }
+    }
+}
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @State private var propertyAddress: String = ""
+    @State private var addressSuggestions: [String] = []
     @State private var propertyPrice: String = ""
     @State private var grossIncome: String = ""
     @State private var operatingExpenses: String = ""
@@ -19,12 +43,32 @@ struct ContentView: View {
     @State private var capRate: Double? = nil
     @State private var cashFlow: Double? = nil
     @State private var cashOnCashReturn: Double? = nil
+    @State private var showSuggestions: Bool = false // Added state to control suggestions visibility
+    @StateObject private var searchDelegate = SearchCompleterDelegate()
     
     var body: some View {
         VStack {
             Text("Real Estate Metrics Calculator")
                 .font(.title)
                 .padding()
+            
+            TextField("Property Address", text: $propertyAddress)
+                .onChange(of: propertyAddress) { _, _ in
+                    searchDelegate.updateQuery(propertyAddress)
+                }
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        
+        
+                List(searchDelegate.searchResults, id: \ .self) { suggestion in
+                    Text(suggestion.title)
+                        .onTapGesture {
+                            propertyAddress = suggestion.title
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        searchDelegate.searchResults.removeAll()
+                                    }
+                        }
+                }
+                .frame(height: searchDelegate.searchResults.isEmpty ? 0 : 150)
             
             Group {
                 TextField("Property Price ($)", text: $propertyPrice)
@@ -43,10 +87,10 @@ struct ContentView: View {
                     calculateMetrics()
                     hideKeyboard()
                 } .frame(width: 80)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
                 
                 
                 Button("Reset") {
@@ -56,10 +100,10 @@ struct ContentView: View {
                     .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(8)
-                    
+                
                 
             }
-                        
+            
             
             if let noi = noi, let capRate = capRate, let cashFlow = cashFlow, let cashOnCashReturn = cashOnCashReturn {
                 VStack(alignment: .leading) {
@@ -104,12 +148,14 @@ struct ContentView: View {
     }
     
     func hideKeyboard() {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 }
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
-}
+    
+    
+    #Preview {
+        ContentView()
+            .modelContainer(for: Item.self, inMemory: true)
+    }
+    
 
