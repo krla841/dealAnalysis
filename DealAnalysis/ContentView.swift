@@ -238,17 +238,27 @@ struct SavedPropertiesView: View {
     @ObservedObject var store: SavedPropertiesStore
 
     var body: some View {
-        List(store.savedProperties) { property in
-            VStack(alignment: .leading) {
-                Text(property.address).font(.headline)
-                Text("Price: $\(property.price)")
-                Text("NOI: $\(property.noi, specifier: "%.2f")")
-                Text("Cap Rate: \(property.capRate, specifier: "%.2f")%")
-                Text("Cash Flow: $\(property.cashFlow, specifier: "%.2f")")
-                Text("Cash on Cash Return: \(property.cashOnCashReturn, specifier: "%.2f")%")
+        List {
+            ForEach(store.savedProperties) { property in
+                VStack(alignment: .leading) {
+                    Text(property.address).font(.headline)
+                    Text("Price: $\(property.price)")
+                    Text("NOI: $\(property.noi, specifier: "%.2f")")
+                    Text("Cap Rate: \(property.capRate, specifier: "%.2f")%")
+                    Text("Cash Flow: $\(property.cashFlow, specifier: "%.2f")")
+                    Text("Cash on Cash Return: \(property.cashOnCashReturn, specifier: "%.2f")%")
+                }
+                .padding(.vertical, 4)
             }
-            .padding(.vertical, 4)
+            .onDelete(perform: delete)
         }
         .navigationTitle("Saved Properties")
+        .toolbar {
+            EditButton()
+        }
+    }
+
+    private func delete(at offsets: IndexSet) {
+        store.savedProperties.remove(atOffsets: offsets)
     }
 }
